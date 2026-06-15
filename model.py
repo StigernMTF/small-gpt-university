@@ -14,7 +14,7 @@ class Seq2SeqTransformer(nn.Module):
         num_heads: int = 8,
         d_ff: int = 2048,
         num_layers: int = 6,
-        max_len: int = 128,
+        max_len: int = 256,
         dropout: float = 0.1,
     ):
         super().__init__()

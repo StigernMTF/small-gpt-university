@@ -7,7 +7,7 @@ def getTokenizer():
         tokenizer.pad_token = tokenizer.eos_token
     return tokenizer
 
-def tokenizePair(en_text, de_text, tokenizer, max_length=128):
+def tokenizePair(en_text, de_text, tokenizer, max_length=256):
     en_encoded = tokenizer(
         en_text,
         max_length=max_length,

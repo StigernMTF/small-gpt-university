@@ -60,7 +60,7 @@ def collate_fn(batch, tokenizer, pad_idx, bos_idx, eos_idx):
     }
 
 
-def get_dataloaders(src_texts, tgt_texts, tokenizer, pad_idx, bos_idx, eos_idx, batch_size=64):
+def get_dataloaders(src_texts, tgt_texts, tokenizer, pad_idx, bos_idx, eos_idx, batch_size=32):
     """
     Splits the data and creates train and validation DataLoaders optimized for Google Colab.
     """

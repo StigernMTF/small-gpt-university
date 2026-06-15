@@ -112,7 +112,7 @@ class Encoder(nn.Module):
             num_heads: int = 8,
             d_ff: int = 2048,
             num_layers: int = 6,
-            max_len: int = 128,
+            max_len: int = 256,
             dropout: float = 0.1,
     ) -> None:
         super().__init__()
@@ -146,7 +146,7 @@ class Encoder(nn.Module):
 if __name__ == "__main__":
     vocab_size = 58101
     pad_idx = 58100
-    max_len = 128
+    max_len = 256
 
     model = Encoder(vocab_size=vocab_size, pad_idx=pad_idx, max_len=max_len)
 

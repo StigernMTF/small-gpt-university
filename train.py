@@ -2,6 +2,9 @@ import os
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
+from data_loader import *
+from tokenizer_utils import *
+from dataset_loader import *
 
 # Импортируем наши модули
 from model import Seq2SeqTransformer

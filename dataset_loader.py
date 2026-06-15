@@ -9,7 +9,7 @@ def extractData(data):
     }
 
 flatDataset = ds.map(extractData(), remove_columns=["translation"])
-endDataVersion = flatDataset.train_test_split(test_size=0.1)
+splitData = flatDataset.train_test_split(test_size=0.1)
 
 # print(endDataVersion)
 # print(endDataVersion["train"][0])

@@ -64,7 +64,7 @@ class Decoder(nn.Module):
         num_heads: int = 8,
         d_ff: int = 2048,
         num_layers: int = 6,
-        max_len: int = 128,
+        max_len: int = 256,
         dropout: float = 0.1,
     ) -> None:
         super().__init__()
@@ -133,7 +133,7 @@ if __name__ == "__main__":
     # Input parameters for testing
     vocab_size = 58101
     pad_idx = 58100
-    max_len = 128
+    max_len = 256
     d_model = 512
 
     # Initialize decoder
