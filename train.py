@@ -110,75 +110,74 @@ def load_checkpoint(model, optimizer, filepath):
 
 # Шаг 6: Главный цикл
 def main():
-    # Фейковые гиперпараметры для тестирования
+    # Реальные гиперпараметры
     VOCAB_SIZE = 58101
-    PAD_IDX = 0
+    PAD_IDX = 58100
+    BOS_IDX = 58100  # Исправляем проблему "None" из Helsinki-NLP
+    EOS_IDX = 0
     NUM_EPOCHS = 10
-    CHECKPOINT_FILE = 'transformer_checkpoint.pth'
-    BATCH_SIZE = 2
-    
+    BATCH_SIZE = 32  # Лучше начать с 32, чтобы Colab не выдал Out of Memory
+
+    # ПУТЬ СОХРАНЕНИЯ: Обязательно подключи Google Drive перед этим!
+    # Выполни в отдельной ячейке: from google.colab import drive; drive.mount('/content/drive')
+    CHECKPOINT_FILE = '/content/drive/MyDrive/transformer_checkpoint.pth'
+
     print(f"Initializing training on device: {device}")
-    
-    # 1. Инициализация модели
+
+    # 1. Инициализация модели (теперь ставим полноценные 6 слоев)
     model = Seq2SeqTransformer(
         vocab_size=VOCAB_SIZE,
         pad_idx=PAD_IDX,
-        num_layers=3, # Уменьшим для быстрого тестового прогона
-    )
-    model = model.to(device)
-    
+        num_layers=6,
+        max_len=256  # Оригинальный размер Трансформера
+    ).to(device)
+
     # 2. Инициализация лосса, оптимизатора и планировщика
     loss_fn = get_loss_fn(PAD_IDX)
     optimizer = get_optimizer(model)
     scheduler = TransformerLRScheduler(optimizer, d_model=512, warmup_steps=4000)
-    
+
     # 3. Загрузка чекпоинта
     start_epoch = load_checkpoint(model, optimizer, CHECKPOINT_FILE)
-    
-    # 4. Фейковый Dataloader для тестирования логики train.py
-    class FakeDataset(Dataset):
-        def __len__(self): return 250 # 250 шагов в одной эпохе
-        def __getitem__(self, idx):
-            # Фейковые последовательности
-            src = torch.randint(0, VOCAB_SIZE, (15,))
-            tgt = torch.randint(0, VOCAB_SIZE, (12,))
-            # Добавим паддинг вручную для имитации реальных данных
-            src[-3:] = PAD_IDX
-            tgt[-2:] = PAD_IDX
-            return src, tgt
 
-    fake_loader = DataLoader(FakeDataset(), batch_size=BATCH_SIZE)
-    
-    # 5. Главный цикл на NUM_EPOCHS
+    # 4. ПОДКЛЮЧЕНИЕ РЕАЛЬНЫХ ДАННЫХ
+    print("Preparing real datasets...")
+    # Берем данные из твоего сгенерированного словаря splitData (он уже должен быть в памяти Colab)
+    src_train = splitData["train"]["english"]
+    tgt_train = splitData["train"]["deutch"]
+
+    tokenizer = getTokenizer()  # Твоя функция инициализации токенайзера
+
+    # Создаем даталоадеры (передаем правильные токены)
+    train_loader, val_loader = get_dataloaders(
+        src_texts=src_train,
+        tgt_texts=tgt_train,
+        tokenizer=tokenizer,
+        pad_idx=PAD_IDX,
+        bos_idx=BOS_IDX,
+        eos_idx=EOS_IDX,
+        batch_size=BATCH_SIZE
+    )
+
+    # 5. Главный цикл
     for epoch in range(start_epoch, NUM_EPOCHS):
         print(f"\n--- Epoch {epoch + 1}/{NUM_EPOCHS} ---")
-        
+
         avg_loss = train_epoch(
             model=model,
-            dataloader=fake_loader,
+            dataloader=train_loader,  # Передаем реальный лоадер
             optimizer=optimizer,
             scheduler=scheduler,
             loss_fn=loss_fn,
             pad_idx=PAD_IDX,
             device=device
         )
-        
+
         print(f"Epoch {epoch + 1} finished. Avg Loss: {avg_loss:.4f}")
-        
-        # Сохранение прогресса после каждой эпохи
-        save_checkpoint(
-            model=model, 
-            optimizer=optimizer, 
-            epoch=epoch, 
-            step=len(fake_loader), 
-            filepath=CHECKPOINT_FILE
-        )
-        
-        # Для тестового запуска прервем цикл после 1-й эпохи, 
-        # чтобы скрипт завершился быстро.
-        if epoch == start_epoch:
-            print("Тестовый прогон 1-й эпохи успешно завершен. Цикл останавливается.")
-            break
+
+        # Сохранение на Google Drive!
+        save_checkpoint(model, optimizer, epoch, step=len(train_loader), filepath=CHECKPOINT_FILE)
+
 
 if __name__ == "__main__":
     main()
