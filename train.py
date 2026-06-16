@@ -140,7 +140,7 @@ def main():
     optimizer = get_optimizer(model)
     scheduler = TransformerLRScheduler(optimizer, d_model=512, warmup_steps=4000)
 
-    # 3. Загрузка чекпоинта
+    # 3. Загрузка
     start_epoch = load_checkpoint(model, optimizer, CHECKPOINT_FILE)
 
     # 4. ПОДКЛЮЧЕНИЕ РЕАЛЬНЫХ ДАННЫХ
