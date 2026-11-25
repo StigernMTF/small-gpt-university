@@ -1,0 +1,11 @@
+# --- Web API ---
+fastapi[standard]>=0.115
+pydantic>=2.0
+
+# --- ML ---
+# torch>=2.6: начиная с этой версии torch.load по умолчанию weights_only=True
+torch>=2.6
+numpy
+transformers>=4.40
+datasets>=3.0
+huggingface_hub
