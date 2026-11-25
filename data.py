@@ -44,7 +44,8 @@ def get_dataloader(tokenizer, batch_size, max_len):
     split_dataset = final_dataset.train_test_split(test_size=0.1, seed=42)
     print(split_dataset)
 
-    def tokenize_function(examples, max_len):
+    # map() передаёт в функцию только examples, поэтому max_len берём из внешней функции
+    def tokenize_function(examples):
         return tokenizer(
             examples["cleaned_text"],
             padding="max_length",
