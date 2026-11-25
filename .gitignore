@@ -1,4 +1,8 @@
 # created by virtualenv automatically
-.idea/
-.env
 .venv/
+.idea/
+__pycache__/
+*.pyc
+artifacts/
+temp_dir/
+FASTAPI_GUIDE.md

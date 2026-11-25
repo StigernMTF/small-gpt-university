@@ -1,82 +1,54 @@
-import torch
 import torch.nn as nn
-from torch import Tensor
-from encoder import Encoder
-from decoder import Decoder
+import positionalEncoding as PE
+import encoder
 
+class TransformerEncoder(nn.Module):
+    def __init__(self, N, max_seq_len, num_embeddings, emb_size, att_out_size, att_head_size, num_heads, ff_hidden_size):
+        super(TransformerEncoder, self).__init__()
 
-class Seq2SeqTransformer(nn.Module):
-    def __init__(
-        self,
-        vocab_size: int,
-        pad_idx: int,
-        d_model: int = 512,
-        num_heads: int = 8,
-        d_ff: int = 2048,
-        num_layers: int = 6,
-        max_len: int = 256,
-        dropout: float = 0.1,
-    ):
-        super().__init__()
-        self.encoder = Encoder(
-            vocab_size=vocab_size,
-            pad_idx=pad_idx,
-            d_model=d_model,
-            num_heads=num_heads,
-            d_ff=d_ff,
-            num_layers=num_layers,
-            max_len=max_len,
-            dropout=dropout,
+        self.N = N
+        self.max_seq_len = max_seq_len
+
+        # for embedding_layer
+        self.num_embeddings = num_embeddings # number of unique indices (vocab_size)
+        self.emb_size = emb_size # embedding vector dimension, d_model
+
+        self.att_out_size = att_out_size
+        self.att_head_size = att_head_size
+        self.num_heads = num_heads
+
+        self.ff_hidden_size = ff_hidden_size
+
+        self.embedding_layer = nn.Embedding(
+            num_embeddings=self.num_embeddings,
+            embedding_dim=self.emb_size
         )
-        self.decoder = Decoder(
-            vocab_size=vocab_size,
-            pad_idx=pad_idx,
-            d_model=d_model,
-            num_heads=num_heads,
-            d_ff=d_ff,
-            num_layers=num_layers,
-            max_len=max_len,
-            dropout=dropout,
+        self.positional_encoder = PE.PositionalEncoding(
+            max_emb_len=self.max_seq_len,
+            d_model=self.emb_size
         )
-        self.generator = nn.Linear(d_model, vocab_size)
 
-    def forward(
-        self,
-        src: Tensor,
-        tgt: Tensor,
-        src_mask: Tensor | None = None,
-        tgt_mask: Tensor | None = None,
-    ) -> Tensor:
-        memory = self.encoder(src, src_mask)
-        output = self.decoder(tgt, memory, tgt_mask, src_mask)
-        logits = self.generator(output)
-        return logits
+        self.encoder_blocks = nn.ModuleDict({
+            f"encoder_block_{i}": encoder.EncoderBlock(
+                input_size=self.emb_size if i==0 else self.att_out_size,
+                head_size=self.att_head_size,
+                num_heads=self.num_heads,
+                out_size=self.att_out_size,
+                ff_hidden_size=self.ff_hidden_size,
+            ) for i in range(self.N)
+        })
 
+    def forward(self, encoder_input, padding_mask=None):
+        # batch_size, seq_len
 
-if __name__ == "__main__":
-    vocab_size = 58101
-    pad_idx = 58100
-    batch_size = 2
-    src_seq_len = 12
-    tgt_seq_len = 10
+        encoder_emb = self.embedding_layer(encoder_input)
+        # batch_size, seq_len, emb_size
 
-    model = Seq2SeqTransformer(
-        vocab_size=vocab_size,
-        pad_idx=pad_idx,
-        num_layers=3,  # reduce to 3 layers for testing speed
-    )
+        out = self.positional_encoder(encoder_emb)
+        # batch_size, seq_len, emb_size
 
-    src = torch.randint(0, vocab_size, (batch_size, src_seq_len))
-    tgt = torch.randint(0, vocab_size, (batch_size, tgt_seq_len))
+        for block in self.encoder_blocks.values():
+            out = block(out, out, out, padding_mask=padding_mask)
+        # batch_size, seq_len, att_out_size
 
-    src_mask = torch.tensor([[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
-                             [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0]])  # [2, 12]
-
-    tgt_mask = torch.tensor([[1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
-                             [1, 1, 1, 1, 1, 1, 0, 0, 0, 0]])  # [2, 10]
-
-    logits = model(src, tgt, src_mask, tgt_mask)
-    print(f"Logits shape: {tuple(logits.shape)}")
-
-    assert logits.shape == (batch_size, tgt_seq_len, vocab_size), f"Unexpected shape: {logits.shape}"
-    print("Seq2SeqTransformer Assembled Successfully!")
+        return out
