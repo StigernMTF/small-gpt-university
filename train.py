@@ -6,9 +6,6 @@ import data
 from config import *
 from data import get_tokenizer
 
-criterion = LR
-optimizer = WEIGHT_DECAY
-
 def evaluate(model, loader, device):
     model.eval()
     correct = 0
@@ -18,7 +15,7 @@ def evaluate(model, loader, device):
         for batch in loader:
             input_ids = batch['input_ids'].to(device)
             attention_mask = batch['attention_mask'].to(device)
-            labels = batch['labels'].to(device)
+            labels = batch['label'].to(device)
 
             logits = model(input_ids, padding_mask=attention_mask)
             predictions = torch.argmax(logits, dim=1)

@@ -3,10 +3,9 @@ from pathlib import Path
 import torch
 import torch.nn.functional as F
 
-from build import build_model
+from build import create_model
 from config import CHECKPOINT_PATH, LABELS
 from data import get_tokenizer
-from temp_dir.trainingClass import attention_mask
 
 
 class Predictor:
@@ -18,10 +17,10 @@ class Predictor:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         ckpt = torch.load(checkpoint_path, map_location=self.device)
-        self.cfg = ckpt["cfg"]
-        self.test_acc = ckpt.get["test_acc"]
+        self.cfg = ckpt["config"]
+        self.test_acc = ckpt.get("test_acc")
 
-        self.model = build_model(self.cfg).to(self.device)
+        self.model = create_model(self.cfg).to(self.device)
         self.model.load_state_dict(ckpt["model_state"])
         self.model.eval()
 
@@ -33,7 +32,7 @@ class Predictor:
             text,
             padding="max_length",
             truncation=True,
-            max_length=self.cfg["max_seq_length"],
+            max_length=self.cfg["max_seq_len"],
             return_tensors="pt",
         )
         input_ids = encode["input_ids"].to(self.device)

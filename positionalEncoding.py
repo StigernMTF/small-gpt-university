@@ -17,7 +17,7 @@ class PositionalEncoding(nn.Module):
         sin = torch.sin(pos / (10000 ** (i[:, ::2] / self.d_model)))
         # max_emb_len, d_model // 2
 
-        cos = torch.cos(pos / (10000 ** (i[:, 1::2] / self.d_model)))
+        cos = torch.cos(pos / (10000 ** (i[:, ::2] / self.d_model)))
         # max_emb_len, d_model // 2
 
         pe[:, ::2] = sin

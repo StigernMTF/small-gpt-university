@@ -27,13 +27,13 @@ class PredictionResponce(BaseModel):
     probability: dict[str, float]
 
 class PredictionRequest(BaseModel):
-    text: str = Field(..., min_length=1, max_length=100, examples=["this movie was awesome"])
+    text: str = Field(..., min_length=1, max_length=5000, examples=["this movie was awesome"])
 
 @app.get("/health")
 def health():
     return {"model_loaded": state.get("predictor") is not None}
 
-@app.post("/predict")
+@app.post("/predict", response_model=PredictionResponce)
 def predict(request: PredictionRequest):
     predictor = state.get("predictor")
     if predictor is None:
